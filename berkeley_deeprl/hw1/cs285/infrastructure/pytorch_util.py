@@ -47,7 +47,11 @@ def build_mlp(
 
     # TODO: return a MLP. This should be an instance of nn.Module
     # Note: nn.Sequential is an instance of nn.Module.
-    raise NotImplementedError
+    conv1 = nn.Conv2d(input_size, 20, 5)
+    conv2 = nn.Conv2d(20, output_size, 5)
+
+
+    return nn.Module 
 
 
 device = None

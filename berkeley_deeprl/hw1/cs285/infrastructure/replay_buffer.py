@@ -41,7 +41,8 @@ class ReplayBuffer(object):
             self.next_obs = next_observations[-self.max_size:]
             self.terminals = terminals[-self.max_size:]
         else:
-            self.obs = np.concatenate([self.obs, observations])[-self.max_size:]
+            self.obs = np.concatenate(
+                [self.obs, observations])[-self.max_size:]
             self.acs = np.concatenate([self.acs, actions])[-self.max_size:]
             if concat_rew:
                 self.rews = np.concatenate(
@@ -65,19 +66,21 @@ class ReplayBuffer(object):
 
     def sample_random_data(self, batch_size):
         assert (
-                self.obs.shape[0]
-                == self.acs.shape[0]
-                == self.rews.shape[0]
-                == self.next_obs.shape[0]
-                == self.terminals.shape[0]
+            self.obs.shape[0]
+            == self.acs.shape[0]
+            == self.rews.shape[0]
+            == self.next_obs.shape[0]
+            == self.terminals.shape[0]
         )
 
-        ## TODO return batch_size number of random entries from each of the 5 component arrays above
-        ## HINT 1: use np.random.permutation to sample random indices
-        ## HINT 2: return corresponding data points from each array (i.e., not different indices from each array)
-        ## HINT 3: look at the sample_recent_data function below
+        # TODO return batch_size number of random entries from each of the 5 component arrays above
+        # HINT 1: use np.random.permutation to sample random indices
+        # HINT 2: return corresponding data points from each array (i.e., not different indices from each array)
+        # HINT 3: look at the sample_recent_data function below
 
-        return TODO, TODO, TODO, TODO, TODO
+        indices = np.random.permutation(len(self))[:batch_size]
+
+        return self.obs[indices], self.acs[indices], self.rews[indices], self.next_obs[indices], self.terminal[indices]
 
     def sample_recent_data(self, batch_size=1):
         return (

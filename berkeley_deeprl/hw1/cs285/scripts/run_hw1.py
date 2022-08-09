@@ -24,14 +24,14 @@ class BC_Trainer(object):
         }
 
         self.params = params
-        self.params['agent_class'] = BCAgent  # HW1: you will modify this
+        self.params['agent_class'] = BCAgent
         self.params['agent_params'] = agent_params
 
         ################
         # RL TRAINER
         ################
 
-        self.rl_trainer = RL_Trainer(self.params)  # HW1: you will modify this
+        self.rl_trainer = RL_Trainer(self.params)
 
         #######################
         # LOAD EXPERT POLICY
