@@ -1,3 +1,4 @@
+from configparser import Interpolation
 import gym
 import math
 import random
@@ -27,6 +28,7 @@ plt.ion()
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # print("device: ", device)
+print("cuda: ", torch.cuda.is_available())
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
@@ -87,7 +89,7 @@ class DQN(nn.Module):
 
 
 resize = T.Compose([T.ToPILImage(),
-                    T.Resize(40, interpolation=Image.CUBIC),
+                    T.Resize(40, T.InterpolationMode.BICUBIC),
                     T.ToTensor()])
 
 
@@ -140,9 +142,9 @@ env.reset()
 BATCH_SIZE = 128
 GAMMA = 0.999
 EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 100 #200
-TARGET_UPDATE = 10
+EPS_END = 0.035
+EPS_DECAY = 100
+TARGET_UPDATE = 15
 
 # Get screen size so that we can initialize layers correctly based on shape
 # returned from AI gym. Typical dimensions at this point are close to 3x40x90
@@ -160,13 +162,14 @@ target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 # print("target net: ", target_net)
 
-optimizer = optim.RMSprop(policy_net.parameters())
+# optimizer = optim.RMSprop(policy_net.parameters())
+optimizer = optim.Adam(policy_net.parameters())
 # print("optimizer: ", optimizer)
 memory = ReplayMemory(10000)
 
 
 steps_done = 0
-
+actions = []
 
 def select_action(state):
     global steps_done
@@ -180,20 +183,24 @@ def select_action(state):
             # t.max(1) will return largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return policy_net(state).max(1)[1].view(1, 1)
+            temp = 1
+            return policy_net(state).max(1)[1].view(1, 1), temp
     else:
-        return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
+        temp = 0
+        return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long), temp
 
 episode_durations = []
 
 def plot_durations():
     plt.figure(2)
-    plt.clf()
+    # plt.clf()
     durations_t = torch.tensor(episode_durations, dtype=torch.float)
     plt.title('Training...')
     plt.xlabel('Episode')
     plt.ylabel('Duration')
     plt.plot(durations_t.numpy())
+    # print("durations_t: ", durations_t.numpy())
+
     # Take 100 episode averages and plot them too
     if len(durations_t) >= 50:
         means = durations_t.unfold(0, 50, 1).mean(1).view(-1)
@@ -205,10 +212,27 @@ def plot_durations():
         display.clear_output(wait=True)
         display.display(plt.gcf())
 
+def plot_loss(ave_losses):
+    plt.figure(3)
+    # plt.clf()
+    plt.title('Loss over t')
+    plt.xlabel('Episode')
+    plt.ylabel('Loss')
+    plt.plot(ave_losses)
+    # plt.pause(0.001)
+
+def plot_action_selected(actions):
+    plt.figure(4)
+    plt.title("Action selected over t")
+    plt.xlabel('Episode')
+    plt.ylabel('Action')
+    plt.plot(actions)
+    # plt.pause(0.001)
 
 def optimize_model():
+    loss = 0
     if len(memory) < BATCH_SIZE: #128
-        return
+        return loss
     transitions = memory.sample(BATCH_SIZE)
     # print("transitions: ", transitions)
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
@@ -228,6 +252,7 @@ def optimize_model():
     # print(type(state_batch))
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
+    # print("reward type: ", type(batch.reward[0]))
 
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken. These are the actions which would've been taken
@@ -247,13 +272,14 @@ def optimize_model():
 
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
-    # print("expected_state_action_values", expected_state_action_values.size())
+    # print("expected_state_action_values: ", expected_state_action_values.size())
 
     # Compute Huber loss
-    criterion = nn.SmoothL1Loss()
+    # criterion = nn.SmoothL1Loss()
+    criterion = nn.HuberLoss()
     loss = criterion(state_action_values,
                      expected_state_action_values.unsqueeze(1))
-    print("loss", loss)
+    # print("loss: ", loss.item())
 
     # Optimize the model
     optimizer.zero_grad() # zero previos grad from backpropagation
@@ -263,19 +289,25 @@ def optimize_model():
         param.grad.data.clamp_(-1, 1)
         # print("param.grad.data after clamp: ", param.grad.data)
     optimizer.step() # gradient descent
+    return loss.item()
 
 
 num_episodes = 500
-num_episodes = 10
+# num_episodes = 10
+ave_losses = []
 for i_episode in range(num_episodes):
     # Initialize the environment and state
     env.reset()
     last_screen = get_screen()
     current_screen = get_screen()
     state = current_screen - last_screen
+    losses = []
+    temp_actions = []
     for t in count():
+        # print("t: ", t)
         # Select and perform an action
-        action = select_action(state)
+        action, temp = select_action(state)
+        temp_actions.append(temp)
         _, reward, done, _ = env.step(action.item())
         reward = torch.tensor([reward], device=device)
 
@@ -294,10 +326,15 @@ for i_episode in range(num_episodes):
         state = next_state
 
         # Perform one step of the optimization (on the policy network)
-        optimize_model()
+        losses.append(optimize_model())
         if done:
             episode_durations.append(t + 1)
+            # average_loss = sum(losses)/(t+1)
+            ave_losses.append(sum(losses)/(t+1))
+            actions.append(sum(temp_actions)/(t+1))
             plot_durations()
+            plot_loss(ave_losses)
+            plot_action_selected(actions)
             break
     # Update the target network, copying all weights and biases in DQN
     if i_episode % TARGET_UPDATE == 0:
