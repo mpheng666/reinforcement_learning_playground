@@ -2,8 +2,24 @@ import tensorflow as tf
 import numpy as np
 import gym
 from gym.spaces import Discrete, Box
+import matplotlib.pyplot as plt
 
 tf.compat.v1.disable_eager_execution()
+plt.ion()
+
+def plot_rewards(reward):
+    plt.figure(1)
+    plt.title('Training...')
+    plt.xlabel('Episode')
+    plt.ylabel('Reward')
+    plt.plot(reward)
+    plt.pause(0.001)
+    # # Take 100 episode averages and plot them too
+    # if len(durations_t) >= 50:
+    #     means = durations_t.unfold(0, 50, 1).mean(1).view(-1)
+    #     means = torch.cat((torch.zeros(49), means))
+    #     plt.plot(means.numpy())
+
 
 def mlp(x, sizes, activation=tf.tanh, output_activation=None):
     # Build a feedforward neural network.
@@ -45,6 +61,8 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
     sess = tf.compat.v1.InteractiveSession()
     sess.run(tf.compat.v1.global_variables_initializer())
+
+    rewards_for_viz = []
 
     # for training policy
     def train_one_epoch():
@@ -112,6 +130,8 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
     # training loop
     for i in range(epochs):
         batch_loss, batch_rets, batch_lens = train_one_epoch()
+        rewards_for_viz.append(np.mean(batch_rets))
+        plot_rewards(rewards_for_viz)
         print('epoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f' %
               (i, batch_loss, np.mean(batch_rets), np.mean(batch_lens)))
 
