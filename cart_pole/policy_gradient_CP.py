@@ -50,10 +50,15 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
     # make loss function whose gradient, for the right data, is policy gradient
     weights_ph = tf.compat.v1.placeholder(shape=(None,), dtype=tf.float32)
+    print("weight ph: ", weights_ph.shape)
     act_ph = tf.compat.v1.placeholder(shape=(None,), dtype=tf.int32)
+    print("act ph: ", act_ph.shape)
     action_masks = tf.one_hot(act_ph, n_acts)
+    print("action mask: ", action_masks.shape)
     log_probs = tf.reduce_sum(action_masks * tf.nn.log_softmax(logits), axis=1)
+    print("log_probs: ", log_probs.shape)
     loss = -tf.reduce_mean(weights_ph * log_probs)
+    print("loss: ", loss.shape)
 
     # make train op
     train_op = tf.compat.v1.train.AdamOptimizer(learning_rate=lr).minimize(loss)
@@ -113,6 +118,11 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
                 # won't render again this epoch
                 finished_rendering_this_epoch = True
+                # print("weight ph: ", weights_ph)
+                # print("act ph: ", act_ph)
+                # print("action mask: ", action_masks)
+                # print("log_probs: ", log_probs)
+                # print("loss: ", loss)
 
                 # end experience loop if we have enough of it
                 if len(batch_obs) > batch_size:

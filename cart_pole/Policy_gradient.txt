@@ -1,0 +1,33 @@
+Problem
+1. Data distributions keep changing due the agents interacting with the environment that leads to instability in training
+2. Sensitive to hyperparameter (eg initialization)
+3. Learning rate too large, policy update pushes policy network to next parameter space which is going to collect the next batch of data under a very poor policy which may never recover again
+
+Proximal Policy Optimization (PPO)
+1. Easy code
+2. Sample efficent
+3. Easy to tune
+
+PPO use policy gradient method online (on-policy):
+1. Agent can pick actions
+2. Agent always foollows his own policy
+3. Does not use replay buffer to store experience
+4. Learn directly from what the agents encounter
+5. Discard the batch of experience after a gradient update so generally less sample efficient?
+
+Compared to DQN using offline stored data
+1. Agent can't picj actions
+2. Learning w exploration, playing w/o exploration
+3. Learning from imperfect expert
+4. Learning from sessions
+
+
+How to policy gradient:
+1. Expectation over the log of the policy actions times an estimation of the advantage function
+2. Log prob from output of policy neural network x Estimate of the relative value of the selected action
+3. The estimation of relative value = Discounted rewards - baseline estimate(value function)
+4. Note that the advantage is calculated from after episode sequence was collected from the environment, so no guessing is involved
+5. Value function estimates the output of the discounted sum of reward from the current state, the value function NN will be updated frequently by minimizing the squared error of (baseline and estimated rewards) --> a supervised learning problem
+6. The value NN takes in states, predicts rewards (noisy with varience)
+
+7. The advantage function is asking whether how much better was the actions taken based on expectation of what would normally happen in the state it was in

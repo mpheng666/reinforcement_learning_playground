@@ -140,11 +140,11 @@ env.reset()
 # plt.show()
 
 BATCH_SIZE = 128
-GAMMA = 0.999
+GAMMA = 0.9999
 EPS_START = 0.9
-EPS_END = 0.035
-EPS_DECAY = 100
-TARGET_UPDATE = 15
+EPS_END = 0.015
+EPS_DECAY = 1000
+TARGET_UPDATE = 10
 
 # Get screen size so that we can initialize layers correctly based on shape
 # returned from AI gym. Typical dimensions at this point are close to 3x40x90
@@ -292,7 +292,7 @@ def optimize_model():
     return loss.item()
 
 
-num_episodes = 500
+num_episodes = 1000000
 # num_episodes = 10
 ave_losses = []
 for i_episode in range(num_episodes):
