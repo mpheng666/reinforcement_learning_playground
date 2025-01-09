@@ -14,7 +14,7 @@
 ### Summary
 
 - Dynamic Programming approaches assume complete knowledge of the environment (the MDP). In practice, we often don't have full knowledge of how the world works.
-- Monte Carlo (MC) methods can learn directly from experience collected by interacting with the environment. An episode of experience is a series of `(State, Action, Reward, Next State)` tuples.
+- Monte Carlo (MC) methods can learn directly from experience collected by interacting with the environment. An episode of experience is a series of `(State, Action, Reward, Next State)` btuples.
 - MC methods work based on episodes. We sample episodes of experience and make updates to our estimates at the end of each episode. MC methods have high variance (due to lots of random decisions within an episode) but are unbiased.
 - MC Policy Evaluation: Given a policy, we want to estimate the state-value function V(s). Sample episodes of experience and estimate V(s) to be the reward received from that state onwards averaged across all of your experience. The same technique works for the action-value function Q(s, a). Given enough samples, this is proven to converge.
 - MC Control: Idea is the same as for Dynamic Programming. Use MC Policy Evaluation to evaluate the current policy then improve the policy greedily. The Problem: How do we ensure that we explore all states if we don't know the full environment?
